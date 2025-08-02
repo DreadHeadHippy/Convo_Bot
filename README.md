@@ -101,8 +101,8 @@ Edit `pedro_convo/config.convo` to customize:
 
 ### 🔒 **Security Best Practices**
 
-**✅ SECURE (Current Implementation):**
-- Bot tokens stored in `.env` file (not committed to git)
+**✅ SECURE:**
+- Bot tokens stored in `.env` file
 - Placeholder tokens in source code
 - `.env` file properly gitignored
 - Environment variable loading supported
@@ -115,7 +115,7 @@ Edit `pedro_convo/config.convo` to customize:
 
 **🛡️ Token Security:**
 ```bash
-# Create .env file (do not commit this!)
+# Create .env file
 cp .env.example .env
 # Edit .env and add your real token
 nano .env
