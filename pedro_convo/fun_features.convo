@@ -1,0 +1,240 @@
+# Pedro Bot - Fun Features and Games in Convo
+# Includes: games, entertainment, interactive features
+
+Import discord
+
+# Rock Paper Scissors Game
+Let rps_choices be ["rock", "paper", "scissors"]
+Let rps_emojis be {"rock": "🪨", "paper": "📄", "scissors": "✂️"}
+
+Define rock_paper_scissors with ctx, user_choice:
+    Let user_choice be lowercase(user_choice)
+    
+    If user_choice not in rps_choices then:
+        Return "❌ Invalid choice! Please choose: rock, paper, or scissors"
+    
+    Let bot_choice be rps_choices[random(0, 2)]
+    Let user_emoji be rps_emojis[user_choice]
+    Let bot_emoji be rps_emojis[bot_choice]
+    
+    Let result_text be user_emoji + " vs " + bot_emoji + "\n\n"
+    
+    If user_choice equals bot_choice then:
+        Let result_text be result_text + "🤝 It's a tie!"
+    Else if (user_choice equals "rock" and bot_choice equals "scissors") or
+            (user_choice equals "paper" and bot_choice equals "rock") or
+            (user_choice equals "scissors" and bot_choice equals "paper") then:
+        Let result_text be result_text + "🎉 You win!"
+    Else:
+        Let result_text be result_text + "🤖 I win!"
+    
+    Return result_text
+
+# Dice Rolling
+Define roll_dice with ctx, sides:
+    If sides less than 2 then:
+        Let sides be 6
+    
+    If sides greater than 100 then:
+        Return "❌ Maximum 100 sides allowed!"
+    
+    Let result be random(1, sides)
+    Return "🎲 You rolled a **" + result + "** on a " + sides + "-sided die!"
+
+# Coin Flip
+Define flip_coin with ctx:
+    Let result be random(0, 1)
+    
+    If result equals 0 then:
+        Return "🪙 **Heads!**"
+    Else:
+        Return "🪙 **Tails!**"
+
+# Number Guessing Game
+Let active_games be {}
+
+Define start_guess_game with ctx:
+    Let user_id be get_user_id(ctx.user)
+    
+    If user_id in active_games then:
+        Return "🎮 You already have an active guessing game! Use `/guess <number>` to play."
+    
+    Let secret_number be random(1, 100)
+    Let active_games[user_id] be {
+        "number": secret_number,
+        "attempts": 0,
+        "max_attempts": 7
+    }
+    
+    Return "🎯 **Number Guessing Game Started!**\n" +
+           "I'm thinking of a number between 1 and 100.\n" +
+           "You have 7 attempts to guess it!\n" +
+           "Use `/guess <number>` to make a guess."
+
+Define make_guess with ctx, guess:
+    Let user_id be get_user_id(ctx.user)
+    
+    If user_id not in active_games then:
+        Return "❌ You don't have an active game! Use `/guess-game` to start."
+    
+    If guess less than 1 or guess greater than 100 then:
+        Return "❌ Please guess a number between 1 and 100!"
+    
+    Let game be active_games[user_id]
+    Let game["attempts"] be game["attempts"] + 1
+    Let secret_number be game["number"]
+    Let attempts be game["attempts"]
+    Let max_attempts be game["max_attempts"]
+    
+    If guess equals secret_number then:
+        Let active_games[user_id] be null
+        Return "🎉 **Congratulations!** You guessed it!\n" +
+               "The number was **" + secret_number + "**\n" +
+               "It took you " + attempts + " attempts!"
+    
+    If attempts greater_equal max_attempts then:
+        Let active_games[user_id] be null
+        Return "💥 **Game Over!** You've used all " + max_attempts + " attempts.\n" +
+               "The number was **" + secret_number + "**\n" +
+               "Better luck next time!"
+    
+    Let remaining be max_attempts - attempts
+    Let hint be ""
+    
+    If guess less than secret_number then:
+        Let hint be "📈 Too low! Go higher."
+    Else:
+        Let hint be "📉 Too high! Go lower."
+    
+    Return hint + "\n" +
+           "Attempts remaining: " + remaining
+
+# Trivia Game
+Let trivia_questions be [
+    {
+        "question": "What is the capital of France?",
+        "answer": "paris",
+        "options": ["London", "Berlin", "Paris", "Madrid"]
+    },
+    {
+        "question": "Which planet is known as the Red Planet?",
+        "answer": "mars",
+        "options": ["Venus", "Mars", "Jupiter", "Saturn"]
+    },
+    {
+        "question": "What is 2 + 2?",
+        "answer": "4",
+        "options": ["3", "4", "5", "6"]
+    },
+    {
+        "question": "Who painted the Mona Lisa?",
+        "answer": "leonardo da vinci",
+        "options": ["Picasso", "Van Gogh", "Leonardo da Vinci", "Michelangelo"]
+    }
+]
+
+Define trivia_command with ctx:
+    Let question_index be random(0, length(trivia_questions) - 1)
+    Let trivia be trivia_questions[question_index]
+    
+    Let response be "🧠 **Trivia Time!**\n\n"
+    Let response be response + "**Question:** " + trivia["question"] + "\n\n"
+    Let response be response + "**Options:**\n"
+    
+    Let i be 0
+    While i less than length(trivia["options"]) do:
+        Let letter be ["A", "B", "C", "D"][i]
+        Let response be response + letter + ". " + trivia["options"][i] + "\n"
+        Let i be i + 1
+    
+    Let response be response + "\nUse `/trivia-answer <option>` to answer!"
+    
+    # Store the correct answer for this user
+    Let user_id be get_user_id(ctx.user)
+    Let active_games[user_id] be {
+        "type": "trivia",
+        "answer": trivia["answer"]
+    }
+    
+    Return response
+
+Define trivia_answer with ctx, answer:
+    Let user_id be get_user_id(ctx.user)
+    
+    If user_id not in active_games or active_games[user_id]["type"] not equals "trivia" then:
+        Return "❌ You don't have an active trivia question! Use `/trivia` to start."
+    
+    Let game be active_games[user_id]
+    Let correct_answer be game["answer"]
+    Let user_answer be lowercase(answer)
+    
+    Let active_games[user_id] be null
+    
+    If user_answer equals correct_answer or
+       (user_answer equals "a" and correct_answer in trivia_questions[0]["options"][0]) then:
+        Return "🎉 **Correct!** Well done! 🧠✨"
+    Else:
+        Return "❌ **Incorrect!** The correct answer was: **" + correct_answer + "**"
+
+# Magic 8-Ball (Enhanced version)
+Define magic_8ball with ctx, question:
+    If question equals "" then:
+        Return "❌ Please ask a question for the magic 8-ball!"
+    
+    Let responses be [
+        "🔮 It is certain.",
+        "🔮 It is decidedly so.", 
+        "🔮 Without a doubt.",
+        "🔮 Yes definitely.",
+        "🔮 You may rely on it.",
+        "🔮 As I see it, yes.",
+        "🔮 Most likely.",
+        "🔮 Outlook good.",
+        "🔮 Yes.",
+        "🔮 Signs point to yes.",
+        "🤔 Reply hazy, try again.",
+        "🤔 Ask again later.",
+        "🤔 Better not tell you now.",
+        "🤔 Cannot predict now.",
+        "🤔 Concentrate and ask again.",
+        "❌ Don't count on it.",
+        "❌ My reply is no.",
+        "❌ My sources say no.",
+        "❌ Outlook not so good.",
+        "❌ Very doubtful."
+    ]
+    
+    Let answer be responses[random(0, length(responses) - 1)]
+    
+    Return "🎱 **Magic 8-Ball**\n\n" +
+           "**Question:** " + question + "\n" +
+           "**Answer:** " + answer
+
+# Random Joke Generator
+Let jokes be [
+    "Why don't scientists trust atoms? Because they make up everything!",
+    "Why did the scarecrow win an award? He was outstanding in his field!",
+    "Why don't eggs tell jokes? They'd crack each other up!",
+    "What do you call a fake noodle? An impasta!",
+    "Why did the math book look so sad? Because it was full of problems!",
+    "What do you call a sleeping bull? A bulldozer!",
+    "Why can't a bicycle stand up by itself? It's two tired!",
+    "What do you call a fish wearing a bowtie? Sofishticated!"
+]
+
+Define joke_command with ctx:
+    Let joke be jokes[random(0, length(jokes) - 1)]
+    Return "😂 **Random Joke**\n\n" + joke
+
+# Register Fun Commands
+Call add_discord_command with "rps", "Play Rock Paper Scissors", rock_paper_scissors
+Call add_discord_command with "roll", "Roll a dice (default 6 sides)", roll_dice  
+Call add_discord_command with "flip", "Flip a coin", flip_coin
+Call add_discord_command with "guess-game", "Start a number guessing game", start_guess_game
+Call add_discord_command with "guess", "Make a guess in the guessing game", make_guess
+Call add_discord_command with "trivia", "Get a random trivia question", trivia_command
+Call add_discord_command with "trivia-answer", "Answer the trivia question", trivia_answer
+Call add_discord_command with "8ball", "Ask the magic 8-ball", magic_8ball
+Call add_discord_command with "joke", "Get a random joke", joke_command
+
+Say "🎮 Fun features and games loaded in Convo!"

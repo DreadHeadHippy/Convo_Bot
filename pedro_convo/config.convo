@@ -1,0 +1,138 @@
+# Pedro Bot Configuration - Convo Version
+# Configuration settings for the Discord bot
+
+# Bot Settings
+Let bot_config be {
+    "token": "YOUR_BOT_TOKEN_HERE",
+    "prefix": "$",
+    "description": "Pedro Discord Bot - Refactored in Convo Language"
+}
+
+# Server Settings
+Let server_config be {
+    "guild_id": "1208632931099086888",
+    "log_channel": "1208632932076490817",
+    "welcome_channel": "1208632932076490812",
+    "rules_channel": "1208632932076490813"
+}
+
+# Role Settings
+Let role_config be {
+    "admin_role": "Admin",
+    "moderator_role": "Moderator", 
+    "member_role": "Member",
+    "jail_role": "Jailed",
+    "verified_role": "Verified"
+}
+
+# Channel Settings
+Let channel_config be {
+    "general": "1208632932374151168",
+    "bot_commands": "1218267262406889522",
+    "voice_category": "1208632932374151176"
+}
+
+# Feature Settings
+Let feature_config be {
+    "auto_moderation": true,
+    "welcome_messages": true,
+    "reaction_roles": true,
+    "temp_voice_channels": true,
+    "warning_system": true,
+    "max_warnings": 5
+}
+
+# Permission Levels
+Let permission_config be {
+    "admin_commands": ["ban", "unban", "clear-warnings"],
+    "moderator_commands": ["kick", "jail", "unjail", "warn", "timeout", "purge"],
+    "member_commands": ["help", "info", "ping", "8ball", "joke", "weather"]
+}
+
+# Auto-Moderation Settings
+Let auto_mod_config be {
+    "max_mentions": 5,
+    "max_emojis": 10,
+    "spam_threshold": 5,
+    "caps_threshold": 70,
+    "link_whitelist": ["discord.gg", "youtube.com", "github.com"]
+}
+
+# Welcome System Settings
+Let welcome_config be {
+    "enabled": true,
+    "message": "Welcome to The Gamers Lounge, {user}! Please read the rules and enjoy your stay!",
+    "dm_message": "Thanks for joining our server! Don't forget to check out the rules.",
+    "auto_role": "Member"
+}
+
+# Activity Settings
+Let activity_config be {
+    "type": "watching",
+    "text": "The Gamers Lounge | {member_count} members",
+    "status": "online"
+}
+
+# Export configuration functions
+Define get_bot_config:
+    Return bot_config
+
+Define get_server_config:
+    Return server_config
+
+Define get_role_config:
+    Return role_config
+
+Define get_channel_config:
+    Return channel_config
+
+Define get_feature_config:
+    Return feature_config
+
+Define get_permission_config:
+    Return permission_config
+
+Define get_auto_mod_config:
+    Return auto_mod_config
+
+Define get_welcome_config:
+    Return welcome_config
+
+Define get_activity_config:
+    Return activity_config
+
+# Configuration validation
+Define validate_config:
+    Let errors be []
+    
+    If bot_config["token"] equals "YOUR_BOT_TOKEN_HERE" then:
+        Let errors be errors + ["Bot token not set in configuration"]
+    
+    If server_config["guild_id"] equals "YOUR_GUILD_ID_HERE" then:
+        Let errors be errors + ["Guild ID not set in configuration"]
+    
+    If length(errors) greater than 0 then:
+        Say "❌ Configuration errors found:"
+        For error in errors do:
+            Say "  - " + error
+        Return false
+    
+    Say "✅ Configuration validated successfully!"
+    Return true
+
+# Load environment variables (if available)
+Define load_environment_config:
+    Try:
+        Let env_token be get_environment_variable("DISCORD_BOT_TOKEN")
+        If env_token not equals "" then:
+            Let bot_config["token"] be env_token
+            Say "✅ Bot token loaded from environment"
+        
+        Let env_guild be get_environment_variable("DISCORD_GUILD_ID") 
+        If env_guild not equals "" then:
+            Let server_config["guild_id"] be env_guild
+            Say "✅ Guild ID loaded from environment"
+    Catch error:
+        Say "⚠️ Environment variables not available: " + error
+
+Say "⚙️ Configuration module loaded in Convo!"

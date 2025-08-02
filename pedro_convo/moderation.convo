@@ -1,0 +1,169 @@
+# Pedro Bot - Advanced Moderation Features in Convo
+# Includes: purge, jail, timeout, warnings system
+
+Import discord
+
+# Purge Messages Command
+Define purge_command with ctx, amount:
+    If not has_permission(ctx.user, "manage_messages") then:
+        Return "❌ You don't have permission to manage messages."
+    
+    If amount less than 1 then:
+        Return "❌ Please specify a number between 1 and 100."
+    
+    If amount greater than 100 then:
+        Return "❌ Cannot delete more than 100 messages at once."
+    
+    Try:
+        Let deleted_count be delete_messages(ctx.channel, amount)
+        Return "✅ Deleted " + deleted_count + " messages."
+    Catch error:
+        Return "❌ Error deleting messages: " + error
+
+# Jail System (Role-based punishment)
+Define jail_command with ctx, user, duration, reason:
+    If not has_permission(ctx.user, "manage_roles") then:
+        Return "❌ You don't have permission to manage roles."
+    
+    If reason equals "" then:
+        Let reason be "No reason provided"
+    
+    Try:
+        # Add jail role and remove other roles
+        Call add_role_to_user with user, "Jailed"
+        Call remove_user_roles with user, ["Member", "Verified"]
+        
+        If duration greater than 0 then:
+            # Set temporary jail with timer
+            Call set_timer with duration, "unjail", user
+            Return "🔒 " + get_user_name(user) + " has been jailed for " + duration + " minutes. Reason: " + reason
+        Else:
+            Return "🔒 " + get_user_name(user) + " has been jailed indefinitely. Reason: " + reason
+    Catch error:
+        Return "❌ Error jailing user: " + error
+
+# Unjail Command
+Define unjail_command with ctx, user:
+    If not has_permission(ctx.user, "manage_roles") then:
+        Return "❌ You don't have permission to manage roles."
+    
+    Try:
+        Call remove_role_from_user with user, "Jailed"
+        Call add_role_to_user with user, "Member"
+        Return "🔓 " + get_user_name(user) + " has been unjailed."
+    Catch error:
+        Return "❌ Error unjailing user: " + error
+
+# Timeout Command (Discord's built-in timeout)
+Define timeout_command with ctx, user, duration, reason:
+    If not has_permission(ctx.user, "moderate_members") then:
+        Return "❌ You don't have permission to timeout members."
+    
+    If reason equals "" then:
+        Let reason be "No reason provided"
+    
+    If duration less than 1 or duration greater than 10080 then:
+        Return "❌ Timeout duration must be between 1 minute and 7 days (10080 minutes)."
+    
+    Try:
+        Call timeout_member with user, duration, reason
+        Return "⏰ " + get_user_name(user) + " has been timed out for " + duration + " minutes. Reason: " + reason
+    Catch error:
+        Return "❌ Error timing out user: " + error
+
+# Remove Timeout Command
+Define remove_timeout_command with ctx, user:
+    If not has_permission(ctx.user, "moderate_members") then:
+        Return "❌ You don't have permission to moderate members."
+    
+    Try:
+        Call remove_timeout with user
+        Return "✅ Timeout removed from " + get_user_name(user)
+    Catch error:
+        Return "❌ Error removing timeout: " + error
+
+# Warning System
+Let warnings_data be {}
+
+Define warn_command with ctx, user, reason:
+    If not has_permission(ctx.user, "kick_members") then:
+        Return "❌ You don't have permission to warn members."
+    
+    If reason equals "" then:
+        Let reason be "No reason provided"
+    
+    Let user_id be get_user_id(user)
+    
+    # Initialize user warnings if they don't exist
+    If user_id not in warnings_data then:
+        Let warnings_data[user_id] be []
+    
+    # Add new warning
+    Let warning_info be {
+        "reason": reason,
+        "moderator": get_user_name(ctx.user),
+        "timestamp": get_current_time()
+    }
+    
+    Let warnings_data[user_id] be warnings_data[user_id] + [warning_info]
+    Let warning_count be length(warnings_data[user_id])
+    
+    Let response be "⚠️ " + get_user_name(user) + " has been warned.\n"
+    Let response be response + "**Reason:** " + reason + "\n"
+    Let response be response + "**Total Warnings:** " + warning_count
+    
+    # Auto-moderation based on warning count
+    If warning_count equals 3 then:
+        Let response be response + "\n🔒 **Auto-Action:** User has been jailed for repeated warnings."
+        Call jail_command with ctx, user, 60, "3 warnings received"
+    Else if warning_count equals 5 then:
+        Let response be response + "\n🔨 **Auto-Action:** User has been kicked for excessive warnings."
+        Call kick_command with ctx, user, "5 warnings received"
+    
+    Return response
+
+# Check Warnings Command
+Define warnings_command with ctx, user:
+    Let user_id be get_user_id(user)
+    
+    If user_id not in warnings_data then:
+        Return "✅ " + get_user_name(user) + " has no warnings."
+    
+    Let user_warnings be warnings_data[user_id]
+    Let warning_count be length(user_warnings)
+    
+    Let response be "⚠️ **Warnings for " + get_user_name(user) + "** (" + warning_count + " total)\n\n"
+    
+    Let i be 0
+    While i less than warning_count do:
+        Let warning be user_warnings[i]
+        Let response be response + "**" + (i + 1) + ".** " + warning["reason"] + "\n"
+        Let response be response + "   *By: " + warning["moderator"] + " at " + warning["timestamp"] + "*\n\n"
+        Let i be i + 1
+    
+    Return response
+
+# Clear Warnings Command
+Define clear_warnings_command with ctx, user:
+    If not has_permission(ctx.user, "ban_members") then:
+        Return "❌ You don't have permission to clear warnings."
+    
+    Let user_id be get_user_id(user)
+    
+    If user_id not in warnings_data then:
+        Return "✅ " + get_user_name(user) + " already has no warnings."
+    
+    Let warnings_data[user_id] be []
+    Return "✅ All warnings cleared for " + get_user_name(user)
+
+# Register Advanced Moderation Commands
+Call add_discord_command with "purge", "Delete multiple messages", purge_command
+Call add_discord_command with "jail", "Jail a user (add jail role)", jail_command
+Call add_discord_command with "unjail", "Remove user from jail", unjail_command
+Call add_discord_command with "timeout", "Timeout a user for specified duration", timeout_command
+Call add_discord_command with "remove-timeout", "Remove timeout from user", remove_timeout_command
+Call add_discord_command with "warn", "Give a warning to a user", warn_command
+Call add_discord_command with "warnings", "Check warnings for a user", warnings_command
+Call add_discord_command with "clear-warnings", "Clear all warnings for a user", clear_warnings_command
+
+Say "🛡️ Advanced moderation features loaded in Convo!"

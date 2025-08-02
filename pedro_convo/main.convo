@@ -1,0 +1,210 @@
+# Pedro Discord Bot - Main Launcher (Convo Version)
+# This is the main entry point for the refactored Pedro bot
+
+# ASCII Art Header
+Say "┌─────────────────────────────────────────────────────────────┐"
+Say "│                    Pedro Discord Bot                        │"
+Say "│                   Refactored in Convo                      │"
+Say "│                                                             │"
+Say "│  Original: Python (discord.py)                             │"
+Say "│  New: Convo Programming Language                            │"
+Say "│  Author: DreadHeadHippy                                     │"
+Say "└─────────────────────────────────────────────────────────────┘"
+Say ""
+
+# Import required modules
+Import discord
+
+# Load configuration
+Say "🔧 Loading configuration..."
+Import config
+
+# Load and validate configuration
+Call load_environment_config
+Let config_valid be validate_config()
+
+If not config_valid then:
+    Say "❌ Configuration validation failed. Please check your settings."
+    Say "📝 Edit the config.convo file to set your bot token and guild ID."
+    Return
+
+# Get configuration values
+Let bot_settings be get_bot_config()
+Let server_settings be get_server_config()
+Let feature_settings be get_feature_config()
+
+Say "✅ Configuration loaded successfully!"
+Say ""
+
+# Create the Discord bot
+Say "🤖 Initializing Discord bot..."
+Call create_discord_bot with bot_settings["token"], bot_settings["prefix"]
+
+# Load core features
+Say "📦 Loading core features..."
+
+# Basic Bot Events
+Define on_bot_ready:
+    Say "🚀 Pedro Bot is online and ready!"
+    Say "📊 Connected to: " + get_server_name()
+    Say "👥 Watching over " + get_member_count() + " members"
+    Call update_bot_activity
+
+Define update_bot_activity:
+    Let activity_settings be get_activity_config()
+    Let member_count be get_member_count()
+    Let activity_text be replace(activity_settings["text"], "{member_count}", member_count)
+    Call set_bot_activity with activity_settings["type"], activity_text
+
+# Register bot ready event
+Call listen_for_event with "ready", on_bot_ready
+
+# Member Events
+If feature_settings["welcome_messages"] then:
+    Say "👋 Loading welcome system..."
+    
+    Define on_member_join with member:
+        Let welcome_settings be get_welcome_config()
+        Let welcome_message be replace(welcome_settings["message"], "{user}", get_user_mention(member))
+        
+        # Send welcome message to channel
+        Call send_message_to_channel with get_channel_config()["general"], welcome_message
+        
+        # Send DM if enabled
+        If welcome_settings["dm_message"] equals "" then:
+            # Skip DM
+        Else:
+            Call send_direct_message with member, welcome_settings["dm_message"]
+        
+        # Add auto role if configured
+        If welcome_settings["auto_role"] equals "" then:
+            # Skip auto role
+        Else:
+            Call add_role_to_user with member, welcome_settings["auto_role"]
+        
+        # Update activity
+        Call update_bot_activity
+    
+    Define on_member_leave with member:
+        Say "👋 " + get_user_name(member) + " has left the server"
+        Call update_bot_activity
+    
+    Call listen_for_event with "member_join", on_member_join
+    Call listen_for_event with "member_leave", on_member_leave
+
+# Auto-Moderation System
+If feature_settings["auto_moderation"] then:
+    Say "🛡️ Loading auto-moderation..."
+    
+    Define auto_moderate_message with message:
+        Let content be get_message_content(message)
+        Let author be get_message_author(message)
+        Let auto_mod_settings be get_auto_mod_config()
+        
+        # Skip if user is admin/moderator
+        If has_permission(author, "administrator") then:
+            Return
+        
+        # Check for spam (too many mentions)
+        Let mention_count be count_mentions(content)
+        If mention_count greater than auto_mod_settings["max_mentions"] then:
+            Call delete_message with message
+            Call timeout_member with author, 5, "Excessive mentions (" + mention_count + ")"
+            Return
+        
+        # Check for emoji spam
+        Let emoji_count be count_emojis(content)
+        If emoji_count greater than auto_mod_settings["max_emojis"] then:
+            Call delete_message with message
+            Call warn_user with author, "Excessive emojis (" + emoji_count + ")"
+            Return
+        
+        # Check for caps spam
+        Let caps_percentage be calculate_caps_percentage(content)
+        If caps_percentage greater than auto_mod_settings["caps_threshold"] and length(content) greater than 20 then:
+            Call delete_message with message
+            Call warn_user with author, "Excessive caps (" + caps_percentage + "%)"
+            Return
+    
+    Call listen_for_message with "all_messages", auto_moderate_message
+
+# Load feature modules
+Say "🎮 Loading fun features..."
+Import fun_features
+
+Say "🛡️ Loading moderation features..."
+Import moderation
+
+Say "🔧 Loading utility features..."
+Import utilities
+
+# Error Handling
+Define handle_bot_error with error:
+    Say "❌ Bot Error: " + error
+    Say "📝 Check logs for more details"
+
+Call listen_for_event with "error", handle_bot_error
+
+# Command Error Handling  
+Define handle_command_error with ctx, error:
+    Let error_message be "❌ Command Error: " + error
+    Call reply_to_user with ctx, error_message
+
+Call listen_for_event with "command_error", handle_command_error
+
+# Shutdown Handler
+Define handle_shutdown:
+    Say "🛑 Pedro Bot is shutting down..."
+    Say "👋 Goodbye!"
+
+Call listen_for_event with "shutdown", handle_shutdown
+
+# Custom Help Command
+Define custom_help with ctx, command_name:
+    If command_name equals "" then:
+        Let help_text be "📋 **Pedro Bot - Command List**\n\n"
+        Let help_text be help_text + "**🎮 Fun Commands:**\n"
+        Let help_text be help_text + "`/8ball` - Magic 8-ball\n"
+        Let help_text be help_text + "`/joke` - Random joke\n"
+        Let help_text be help_text + "`/rps` - Rock Paper Scissors\n"
+        Let help_text be help_text + "`/roll` - Roll dice\n"
+        Let help_text be help_text + "`/flip` - Flip coin\n"
+        Let help_text be help_text + "`/trivia` - Trivia questions\n"
+        Let help_text be help_text + "`/guess-game` - Number guessing\n\n"
+        
+        Let help_text be help_text + "**🛡️ Moderation Commands:**\n"
+        Let help_text be help_text + "`/kick` - Kick a user\n"
+        Let help_text be help_text + "`/ban` - Ban a user\n"
+        Let help_text be help_text + "`/jail` - Jail a user\n"
+        Let help_text be help_text + "`/warn` - Warn a user\n"
+        Let help_text be help_text + "`/timeout` - Timeout a user\n"
+        Let help_text be help_text + "`/purge` - Delete messages\n\n"
+        
+        Let help_text be help_text + "**🔧 Utility Commands:**\n"
+        Let help_text be help_text + "`/serverinfo` - Server information\n"
+        Let help_text be help_text + "`/userinfo` - User information\n"
+        Let help_text be help_text + "`/weather` - Weather info\n"
+        Let help_text be help_text + "`/poll` - Create polls\n"
+        Let help_text be help_text + "`/remind` - Set reminders\n"
+        Let help_text be help_text + "`/calc` - Calculator\n"
+        Let help_text be help_text + "`/ping` - Bot latency\n\n"
+        
+        Let help_text be help_text + "Use `/help <command>` for detailed info about a specific command."
+        Return help_text
+    Else:
+        Return "📖 Detailed help for `/" + command_name + "` would be shown here."
+
+Call add_discord_command with "help", "Show bot commands and help", custom_help
+
+# Final Setup
+Say ""
+Say "✅ All features loaded successfully!"
+Say "🎯 Bot configured for server: " + server_settings["guild_id"]
+Say "🔑 Command prefix: " + bot_settings["prefix"]
+Say ""
+Say "🚀 Starting Pedro Discord Bot..."
+Say "💡 Tip: Make sure your bot token and permissions are correctly set!"
+Say ""
+
+# Start the bot
+Call start_discord_bot

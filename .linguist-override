@@ -1,0 +1,24 @@
+# Language Detection Override for Convo Programming Language
+# Force GitHub to properly categorize this repository
+
+# Mark all .convo files as Convo language
+*.convo linguist-language=Convo
+
+# The Pedro bot files are written in Convo
+pedro_convo/ linguist-language=Convo
+
+# Mark interpreter as vendored (supporting infrastructure)
+convo_interpreter/ linguist-vendored=true
+
+# Documentation
+*.md linguist-documentation=true
+docs/ linguist-documentation=true
+
+# Configuration files  
+*.json linguist-data=true
+*.yml linguist-data=true
+*.yaml linguist-data=true
+.github/ linguist-data=true
+
+# IDE files
+.vscode/ linguist-data=true

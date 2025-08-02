@@ -1,0 +1,115 @@
+# Pedro Discord Bot - Refactored in Convo Language
+# Original Python version: https://github.com/DreadHeadHippy/Pedro
+# Refactored to use natural language syntax with Convo
+
+# Import Discord functionality
+Import discord
+
+# Bot Configuration
+Let bot_token be "YOUR_BOT_TOKEN_HERE"
+Let command_prefix be "!"
+Let guild_id be "YOUR_GUILD_ID_HERE"
+
+# Create the Discord bot
+Call create_discord_bot with bot_token, command_prefix
+
+# Bot Setup and Activity
+Define update_activity:
+    Say "Bot activity updated - watching The Gamers Lounge"
+
+# Welcome and Member Events
+Define handle_member_join with member:
+    Say "Welcome to the server, " + get_user_name(member) + "!"
+    Call update_activity
+
+# Message Event Handlers
+Define handle_hello_message with message:
+    Let username be get_user_name(message)
+    Return "Hello there, " + username + "! 👋"
+
+Define handle_ping_message with message:
+    Return "Pong! 🏓"
+
+# Listen for specific message patterns
+Call listen_for_message with "contains \"hello\"", handle_hello_message
+Call listen_for_message with "contains \"ping\"", handle_ping_message
+
+# Fun Commands - 8Ball
+Define eightball_command with ctx, question:
+    Let responses be [
+        "It is certain.", "It is decidedly so.", "Without a doubt.", 
+        "Yes – definitely.", "You may rely on it.", "As I see it, yes.",
+        "Most likely.", "Outlook good.", "Yes.", "Signs point to yes.",
+        "Reply hazy, try again.", "Ask again later.", "Better not tell you now.",
+        "Cannot predict now.", "Concentrate and ask again.", "Don't count on it.",
+        "My reply is no.", "My sources say no.", "Outlook not so good.", "Very doubtful."
+    ]
+    Let random_index be random(0, 19)
+    Let answer be responses[random_index]
+    Return "🎱 Question: " + question + "\n🎯 Answer: " + answer
+
+# Moderation Commands - Kick
+Define kick_command with ctx, user, reason:
+    If not has_permission(ctx.user, "kick_members") then:
+        Return "❌ You don't have permission to kick members."
+    
+    If reason equals "" then:
+        Let reason be "No reason provided"
+    
+    Try:
+        Call kick_member with user, reason
+        Return "✅ " + get_user_name(user) + " has been kicked for: " + reason
+    Catch error:
+        Return "❌ Error kicking user: " + error
+
+# Moderation Commands - Ban
+Define ban_command with ctx, user, reason:
+    If not has_permission(ctx.user, "ban_members") then:
+        Return "❌ You don't have permission to ban members."
+    
+    If reason equals "" then:
+        Let reason be "No reason provided"
+    
+    Try:
+        Call ban_member with user, reason
+        Return "✅ " + get_user_name(user) + " has been banned for: " + reason
+    Catch error:
+        Return "❌ Error banning user: " + error
+
+# Utility Commands - Help
+Define help_command with ctx:
+    Let help_text be "📋 **Pedro Bot Commands**\n\n"
+    Let help_text be help_text + "**Fun Commands:**\n"
+    Let help_text be help_text + "• `/8ball <question>` - Ask the magic 8-ball\n"
+    Let help_text be help_text + "• `/ping` - Check bot responsiveness\n\n"
+    Let help_text be help_text + "**Moderation Commands:**\n"
+    Let help_text be help_text + "• `/kick <user> [reason]` - Kick a user\n"
+    Let help_text be help_text + "• `/ban <user> [reason]` - Ban a user\n"
+    Let help_text be help_text + "• `/purge <amount>` - Delete messages\n\n"
+    Let help_text be help_text + "**Utility Commands:**\n"
+    Let help_text be help_text + "• `/help` - Show this help message\n"
+    Let help_text be help_text + "• `/info` - Bot information"
+    Return help_text
+
+# Bot Information Command
+Define info_command with ctx:
+    Let info_text be "🤖 **Pedro Bot Information**\n\n"
+    Let info_text be info_text + "• **Language:** Convo Programming Language\n"
+    Let info_text be info_text + "• **Original:** Python (discord.py)\n"
+    Let info_text be info_text + "• **Refactored:** Natural language syntax\n"
+    Let info_text be info_text + "• **Features:** Moderation, Fun, Utilities\n"
+    Let info_text be info_text + "• **Creator:** DreadHeadHippy\n"
+    Let info_text be info_text + "• **GitHub:** github.com/DreadHeadHippy/Pedro"
+    Return info_text
+
+# Register Discord Commands
+Call add_discord_command with "8ball", "Ask the magic 8-ball a question", eightball_command
+Call add_discord_command with "kick", "Kick a user from the server", kick_command
+Call add_discord_command with "ban", "Ban a user from the server", ban_command
+Call add_discord_command with "help", "Show available commands", help_command
+Call add_discord_command with "info", "Show bot information", info_command
+
+# Start the bot
+Say "🚀 Starting Pedro Discord Bot in Convo..."
+Say "✨ Natural language Discord bot is ready!"
+Call start_discord_bot

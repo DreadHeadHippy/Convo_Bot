@@ -1,0 +1,237 @@
+# Pedro Bot - Utility Features in Convo
+# Includes: server info, user info, weather, polls, reminders
+
+Import discord
+
+# Server Information Command
+Define server_info with ctx:
+    Let server be get_server(ctx)
+    Let member_count be get_member_count(server)
+    Let channel_count be get_channel_count(server)
+    Let role_count be get_role_count(server)
+    Let creation_date be get_creation_date(server)
+    Let owner be get_server_owner(server)
+    
+    Let info_text be "🏰 **Server Information**\n\n"
+    Let info_text be info_text + "**Name:** " + get_server_name(server) + "\n"
+    Let info_text be info_text + "**Owner:** " + get_user_name(owner) + "\n"
+    Let info_text be info_text + "**Members:** " + member_count + "\n"
+    Let info_text be info_text + "**Channels:** " + channel_count + "\n"
+    Let info_text be info_text + "**Roles:** " + role_count + "\n"
+    Let info_text be info_text + "**Created:** " + creation_date + "\n"
+    Let info_text be info_text + "**Server ID:** " + get_server_id(server)
+    
+    Return info_text
+
+# User Information Command
+Define user_info with ctx, target_user:
+    If target_user equals "" then:
+        Let target_user be ctx.user
+    
+    Let user_id be get_user_id(target_user)
+    Let username be get_user_name(target_user)
+    Let display_name be get_display_name(target_user)
+    Let join_date be get_join_date(target_user)
+    Let account_creation be get_account_creation_date(target_user)
+    Let user_roles be get_user_roles(target_user)
+    
+    Let info_text be "👤 **User Information**\n\n"
+    Let info_text be info_text + "**Username:** " + username + "\n"
+    Let info_text be info_text + "**Display Name:** " + display_name + "\n"
+    Let info_text be info_text + "**User ID:** " + user_id + "\n"
+    Let info_text be info_text + "**Account Created:** " + account_creation + "\n"
+    Let info_text be info_text + "**Joined Server:** " + join_date + "\n"
+    Let info_text be info_text + "**Roles:** " + user_roles
+    
+    Return info_text
+
+# Weather Command (Mock implementation)
+Define weather_command with ctx, location:
+    If location equals "" then:
+        Return "❌ Please specify a location! Example: `/weather New York`"
+    
+    # This is a simplified weather response
+    # In a real implementation, you'd integrate with a weather API
+    Let weather_conditions be ["Sunny ☀️", "Cloudy ☁️", "Rainy 🌧️", "Snowy ❄️", "Partly Cloudy ⛅"]
+    Let temperatures be [15, 18, 22, 25, 28, 30, 32]
+    
+    Let condition be weather_conditions[random(0, length(weather_conditions) - 1)]
+    Let temp be temperatures[random(0, length(temperatures) - 1)]
+    
+    Let weather_text be "🌤️ **Weather for " + location + "**\n\n"
+    Let weather_text be weather_text + "**Condition:** " + condition + "\n"
+    Let weather_text be weather_text + "**Temperature:** " + temp + "°C\n"
+    Let weather_text be weather_text + "**Note:** *This is a demo weather response*"
+    
+    Return weather_text
+
+# Poll System
+Let active_polls be {}
+
+Define create_poll with ctx, question, options:
+    If question equals "" then:
+        Return "❌ Please provide a poll question!"
+    
+    If length(options) less than 2 then:
+        Return "❌ Please provide at least 2 options separated by commas!"
+    
+    Let poll_id be get_user_id(ctx.user) + "_" + get_current_timestamp()
+    Let poll_emojis be ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+    
+    If length(options) greater than 10 then:
+        Return "❌ Maximum 10 options allowed!"
+    
+    Let poll_text be "📊 **Poll:** " + question + "\n\n"
+    
+    Let i be 0
+    While i less than length(options) do:
+        Let poll_text be poll_text + poll_emojis[i] + " " + options[i] + "\n"
+        Let i be i + 1
+    
+    Let poll_text be poll_text + "\nReact with the corresponding emoji to vote!"
+    
+    # Store poll data
+    Let active_polls[poll_id] be {
+        "question": question,
+        "options": options,
+        "votes": {},
+        "creator": get_user_id(ctx.user)
+    }
+    
+    Return poll_text
+
+# Poll Results
+Define poll_results with ctx, poll_id:
+    If poll_id not in active_polls then:
+        Return "❌ Poll not found!"
+    
+    Let poll be active_polls[poll_id]
+    Let total_votes be 0
+    
+    # Count total votes
+    For vote_option in poll["votes"] do:
+        Let total_votes be total_votes + length(poll["votes"][vote_option])
+    
+    Let results_text be "📊 **Poll Results:** " + poll["question"] + "\n\n"
+    Let results_text be results_text + "**Total Votes:** " + total_votes + "\n\n"
+    
+    Let i be 0
+    While i less than length(poll["options"]) do:
+        Let option be poll["options"][i]
+        Let vote_count be 0
+        
+        If i in poll["votes"] then:
+            Let vote_count be length(poll["votes"][i])
+        
+        Let percentage be 0
+        If total_votes greater than 0 then:
+            Let percentage be round((vote_count / total_votes) * 100)
+        
+        Let results_text be results_text + "**" + option + ":** " + vote_count + " votes (" + percentage + "%)\n"
+        Let i be i + 1
+    
+    Return results_text
+
+# Reminder System
+Let reminders be {}
+
+Define set_reminder with ctx, duration, message:
+    If duration less than 1 then:
+        Return "❌ Reminder duration must be at least 1 minute!"
+    
+    If duration greater than 10080 then:
+        Return "❌ Maximum reminder duration is 7 days (10080 minutes)!"
+    
+    If message equals "" then:
+        Let message be "Reminder!"
+    
+    Let user_id be get_user_id(ctx.user)
+    Let reminder_id be user_id + "_" + get_current_timestamp()
+    
+    Let reminders[reminder_id] be {
+        "user_id": user_id,
+        "message": message,
+        "time": get_current_time() + (duration * 60),
+        "channel": get_channel_id(ctx.channel)
+    }
+    
+    # Set timer for reminder
+    Call set_timer with duration, "send_reminder", reminder_id
+    
+    Return "⏰ Reminder set for " + duration + " minutes: \"" + message + "\""
+
+# Send Reminder (Timer callback)
+Define send_reminder with reminder_id:
+    If reminder_id in reminders then:
+        Let reminder be reminders[reminder_id]
+        Let user_mention be "<@" + reminder["user_id"] + ">"
+        Let reminder_text be "⏰ **Reminder:** " + reminder["message"]
+        
+        # Send reminder to the channel
+        Call send_message_to_channel with reminder["channel"], user_mention + " " + reminder_text
+        
+        # Remove from reminders
+        Let reminders[reminder_id] be null
+
+# Calculator
+Define calculate with ctx, expression:
+    If expression equals "" then:
+        Return "❌ Please provide a mathematical expression! Example: `/calc 2 + 2`"
+    
+    Try:
+        # Basic calculation (simplified)
+        Let result be evaluate_math(expression)
+        Return "🧮 **Calculator**\n\n" +
+               "**Expression:** " + expression + "\n" +
+               "**Result:** " + result
+    Catch error:
+        Return "❌ Invalid mathematical expression! Please check your input."
+
+# Random Number Generator
+Define random_number with ctx, min_val, max_val:
+    If min_val greater_equal max_val then:
+        Return "❌ Minimum value must be less than maximum value!"
+    
+    If max_val - min_val greater than 1000000 then:
+        Return "❌ Range too large! Maximum range is 1,000,000."
+    
+    Let result be random(min_val, max_val)
+    Return "🎲 **Random Number**\n\n" +
+           "**Range:** " + min_val + " to " + max_val + "\n" +
+           "**Result:** " + result
+
+# Ping Command (Bot latency)
+Define ping_command with ctx:
+    Let latency be get_bot_latency()
+    
+    Let status_emoji be "🟢"
+    Let status_text be "Excellent"
+    
+    If latency greater than 100 then:
+        Let status_emoji be "🟡"
+        Let status_text be "Good"
+    
+    If latency greater than 200 then:
+        Let status_emoji be "🟠"
+        Let status_text be "Fair"
+    
+    If latency greater than 500 then:
+        Let status_emoji be "🔴"
+        Let status_text be "Poor"
+    
+    Return "🏓 **Pong!**\n\n" +
+           "**Latency:** " + latency + "ms " + status_emoji + "\n" +
+           "**Status:** " + status_text
+
+# Register Utility Commands
+Call add_discord_command with "serverinfo", "Show server information", server_info
+Call add_discord_command with "userinfo", "Show user information", user_info
+Call add_discord_command with "weather", "Get weather for a location", weather_command
+Call add_discord_command with "poll", "Create a poll", create_poll
+Call add_discord_command with "poll-results", "Show poll results", poll_results
+Call add_discord_command with "remind", "Set a reminder", set_reminder
+Call add_discord_command with "calc", "Calculate a mathematical expression", calculate
+Call add_discord_command with "random", "Generate a random number", random_number
+Call add_discord_command with "ping", "Check bot latency", ping_command
+
+Say "🔧 Utility features loaded in Convo!"

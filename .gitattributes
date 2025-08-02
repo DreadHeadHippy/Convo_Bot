@@ -1,0 +1,44 @@
+# ==================================================
+# CONVO PROGRAMMING LANGUAGE RECOGNITION
+# ==================================================
+
+# All .convo files should be recognized as Convo language
+*.convo linguist-language=Convo
+*.convo linguist-detectable=true
+
+# Pedro Bot - Written entirely in Convo
+pedro_convo/*.convo linguist-language=Convo
+
+# Convo Examples and Tests
+convo_interpreter/examples/*.convo linguist-language=Convo
+convo_interpreter/tests/*.convo linguist-language=Convo
+
+# ==================================================
+# INFRASTRUCTURE FILES (NOT COUNTED IN LANGUAGE STATS)
+# ==================================================
+
+# Python interpreter implementation (supporting infrastructure)
+convo_interpreter/*.py linguist-vendored=true
+convo_interpreter/**/*.py linguist-vendored=true
+
+# Documentation files
+*.md linguist-documentation=true
+docs/ linguist-documentation=true
+convo_interpreter/docs/ linguist-documentation=true
+
+# Configuration and metadata
+*.json linguist-data=true
+*.yml linguist-data=true
+*.yaml linguist-data=true
+*.toml linguist-data=true
+.github/ linguist-data=true
+.vscode/ linguist-data=true
+
+# Build and package files
+setup.py linguist-data=true
+requirements*.txt linguist-data=true
+MANIFEST.in linguist-data=true
+
+# ==================================================
+# RESULT: Repository should show as 100% Convo
+# ==================================================

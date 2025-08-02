@@ -1,0 +1,20 @@
+# GitHub Language Override for Convo Programming Language
+# This file tells GitHub to recognize .convo files as the Convo programming language
+
+type: programming
+color: "#FFD700"
+extensions:
+  - ".convo"
+aliases:
+  - convo
+  - convo-lang
+tm_scope: source.convo
+ace_mode: text
+language_id: 599995543
+
+# File patterns for Convo files
+filenames:
+  - "*.convo"
+  
+# Search configuration  
+searchable: true
