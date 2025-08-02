@@ -166,7 +166,12 @@ GitHub should recognize this as **100% Convo programming language**.
 
 ## 🤖 About Convo Language
 
-This project showcases the **Convo Programming Language** - a natural language programming language that compiles to Python. Convo makes programming accessible through conversational syntax while maintaining the power of traditional programming languages.
+This project showcases the **Convo Programming Language** - a natural language programming language that is interpreted at runtime. Convo makes programming accessible through conversational syntax while maintaining the power of traditional programming languages.
+
+**How it works:**
+1. **Lexer** tokenizes Convo source code
+2. **Parser** creates an Abstract Syntax Tree (AST)  
+3. **Interpreter** directly executes the AST
 
 **Repository**: [https://github.com/DreadHeadHippy/Convo](https://github.com/DreadHeadHippy/Convo)
 
